@@ -8,9 +8,7 @@ if not exist "build" mkdir build
 
 pushd build
 
-echo %compiler_dir%
-
-%complier_dir% /EHsc /Zi^
+%compiler_dir% /EHsc /Zi^
   /Fe:"main.exe"^
   ../src/main.cpp^
   /link User32.lib Shell32.lib
