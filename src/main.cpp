@@ -5,6 +5,13 @@ HWND m_hwnd = NULL;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
+  switch (uMsg) {
+    case WM_DESTROY: {
+      PostQuitMessage(0);
+      return 0;
+    }
+  }
+
   // Default message handler
   return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
@@ -43,7 +50,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     nullptr,
     nullptr,
     hInstance,
-    nullptr);
+    0);
 
   // Show window
   ShowWindow(m_hwnd, nCmdShow);
