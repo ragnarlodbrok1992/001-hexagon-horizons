@@ -1,7 +1,12 @@
 #include "main.h"
 
 
+// Windows required stuff
 HWND m_hwnd = NULL;
+
+// Engine variables
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 720;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -45,8 +50,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WS_OVERLAPPEDWINDOW,
     CW_USEDEFAULT,
     CW_USEDEFAULT,
-    800,
-    600,
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
     nullptr,
     nullptr,
     hInstance,
