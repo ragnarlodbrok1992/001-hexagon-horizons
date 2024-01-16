@@ -6,5 +6,6 @@
 #endif
 
 #include <windows.h>
+#include <shellapi.h>
 
 #endif // _H_MAIN
