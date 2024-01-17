@@ -11,7 +11,8 @@ pushd build
 %compiler_dir% /EHsc /Zi^
   /Fe:"main.exe"^
   ../src/main.cpp^
-  /link User32.lib Shell32.lib
+  /I"../lib/DirectX-Headers-main/include/directx/"^
+  /link User32.lib Shell32.lib dxguid.lib d3d12.lib d3dcompiler.lib
 
 echo "Done building!"
 

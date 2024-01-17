@@ -43,10 +43,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   windowClass.lpszClassName = "WindowClass";
   RegisterClassEx(&windowClass);
 
+  // Create pSample which is DXSample
+
+  // Some stuff with window rect? Using pSample which is DXSample
+  // RECT windowRect = {0, 0, pSample.m_width, pSample.m_height};
+
+
   // Create the window nad store a handle to it
   m_hwnd = CreateWindow(
     windowClass.lpszClassName,
-    "Test window",
+    "Hexagon Horizons",
     WS_OVERLAPPEDWINDOW,
     CW_USEDEFAULT,
     CW_USEDEFAULT,
