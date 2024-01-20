@@ -20,4 +20,6 @@
 #include <cassert>
 #include <chrono>
 
+#include "Helpers.h"
+
 #endif // _H_MAIN

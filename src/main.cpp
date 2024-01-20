@@ -3,10 +3,26 @@
 
 // Windows required stuff
 HWND m_hwnd = NULL;
+RECT g_WindowRect;
 
 // Engine variables
+const uint8_t g_NumFrames = 3; // Triple buffering
+const bool g_UseWarp = false; // Use WARP adapter (software rendering)
+const bool g_IsInitialized = false; // Is the engine initialized?
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 720;
+
+// DirectX 12 objects
+Microsoft::WRL::ComPtr<ID3D12Device> g_Device;
+Microsoft::WRL::ComPtr<ID3D12CommandQueue> g_CommandQueue;
+Microsoft::WRL::ComPtr<IDXGISwapChain3> g_SwapChain;
+Microsoft::WRL::ComPtr<ID3D12Resource> g_BackBuffers[g_NumFrames];
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> g_CommandList;
+Microsoft::WRL::ComPtr<ID3D12CommandAllocator> g_CommandAllocators[g_NumFrames];
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> g_RTVDescriptorHeap;
+
+UINT g_RTVDescriptorSize;
+UINT g_CurrentBackBufferIndex;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
