@@ -16,9 +16,9 @@ int g_ScreenWidth = 1280;
 int g_ScreenHeight = 720;
 
 // DirectX 12 objects
-Microsoft::WRL::ComPtr<ID3D12Device> g_Device;
+Microsoft::WRL::ComPtr<ID3D12Device2> g_Device;
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> g_CommandQueue;
-Microsoft::WRL::ComPtr<IDXGISwapChain3> g_SwapChain;
+Microsoft::WRL::ComPtr<IDXGISwapChain4> g_SwapChain;
 Microsoft::WRL::ComPtr<ID3D12Resource> g_BackBuffers[g_NumFrames];
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> g_CommandList;
 Microsoft::WRL::ComPtr<ID3D12CommandAllocator> g_CommandAllocators[g_NumFrames];
@@ -392,6 +392,29 @@ void Render() {
     g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
 
     WaitForFenceValue(g_Fence, g_FrameFenceValues[g_CurrentBackBufferIndex], g_FenceEvent);
+  }
+}
+
+// Resize swap chain from tutorial
+void Resize(uint32_t width, uint32_t height) {
+  if (g_ScreenWidth != width || g_ScreenHeight != height) {
+    g_ScreenWidth = std::max(1u, width);
+    g_ScreenHeight = std::max(1u, height);
+
+    Flush(g_CommandQueue, g_Fence, g_FenceValue, g_FenceEvent);
+
+    for (int i = 0; i < g_NumFrames; ++i) {
+      g_BackBuffers[i].Reset();
+      g_FrameFenceValues[i] = g_FrameFenceValues[g_CurrentBackBufferIndex];
+    }
+
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+    ThrowIfFailed(g_SwapChain->GetDesc(&swapChainDesc));
+    ThrowIfFailed(g_SwapChain->ResizeBuffers(g_NumFrames, g_ScreenWidth, g_ScreenHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+
+    g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
+
+    UpdateRenderTargetViews(g_Device, g_SwapChain, g_RTVDescriptorHeap);
   }
 }
 
