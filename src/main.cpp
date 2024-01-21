@@ -1,5 +1,8 @@
 #include "main.h"
 
+// Engine defines
+#define _DEBUG
+
 
 // Windows required stuff
 HWND m_hwnd = NULL;
@@ -7,10 +10,10 @@ RECT g_WindowRect;
 
 // Engine variables
 const uint8_t g_NumFrames = 3; // Triple buffering
-const bool g_UseWarp = false; // Use WARP adapter (software rendering)
-const bool g_IsInitialized = false; // Is the engine initialized?
-const int SCREEN_WIDTH = 1280;
-const int SCREEN_HEIGHT = 720;
+bool g_UseWarp = false; // Use WARP adapter (software rendering)
+bool g_IsInitialized = false; // Is the engine initialized?
+int g_ScreenWidth = 1280;
+int g_ScreenHeight = 720;
 
 // DirectX 12 objects
 Microsoft::WRL::ComPtr<ID3D12Device> g_Device;
@@ -24,6 +27,19 @@ Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> g_RTVDescriptorHeap;
 UINT g_RTVDescriptorSize;
 UINT g_CurrentBackBufferIndex;
 
+// Synchronization objects
+Microsoft::WRL::ComPtr<ID3D12Fence> g_Fence;
+uint64_t g_FenceValue = 0;
+uint64_t g_FrameFenceValues[g_NumFrames] = {};
+HANDLE g_FenceEvent;
+
+// Controlling the swap chain present method
+bool g_VSync = true;
+bool g_TearingSupported = false;
+bool g_Fullscreen = false;
+
+
+// Window callback function
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
   switch (uMsg) {
@@ -37,17 +53,40 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
   return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+// Command line parsing function - from tutorial
+void ParseCommandLineArguments() {
+  int argc;
+  wchar_t **argv = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
+
+  for (size_t i = 0; i < argc; ++i) {
+    if (::wcscmp(argv[i], L"-w") == 0 || ::wcscmp(argv[i], L"--width") == 0) {
+      g_ScreenWidth = ::wcstol(argv[i + 1], nullptr, 10);
+    }
+    if (::wcscmp(argv[i], L"-h") == 0 || ::wcscmp(argv[i], L"--height") == 0) {
+      g_ScreenHeight = ::wcstol(argv[i + 1], nullptr, 10);
+    }
+    if (::wcscmp(argv[i], L"-warp") == 0 || ::wcscmp(argv[i], L"--warp") == 0) {
+      g_UseWarp = true;
+    }
+  }
+
+  // Free memory allocated by CommandLineToArgvW
+  ::LocalFree(argv);
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   // Parse command line arguments
+  /*
   int argc;
   LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
   if (argv == NULL) {
     MessageBoxW(NULL, L"Unable to parse command line arguments", L"Error", MB_OK | MB_ICONERROR);
     return 1;
   }
+  */
 
-  LocalFree(argv);
+  // LocalFree(argv);
 
   // Intialize window class
   WNDCLASSEX windowClass = {0};
@@ -72,8 +111,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WS_OVERLAPPEDWINDOW,
     CW_USEDEFAULT,
     CW_USEDEFAULT,
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT,
+    g_ScreenWidth,
+    g_ScreenHeight,
     nullptr,
     nullptr,
     hInstance,
