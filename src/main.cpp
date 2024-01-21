@@ -122,6 +122,73 @@ Microsoft::WRL::ComPtr<IDXGIAdapter4> GetAdapter(bool useWarp) {
   return dxgiAdapter4;
 }
 
+// Create device from tutorial
+Microsoft::WRL::ComPtr<ID3D12Device2> CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter) {
+  Microsoft::WRL::ComPtr<ID3D12Device2> d3d12Device2;
+  ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2)));
+  
+#if defined(_DEBUG)
+  Microsoft::WRL::ComPtr<ID3D12InfoQueue> pInfoQueue;
+  if (SUCCEEDED(d3d12Device2.As(&pInfoQueue))) {
+    pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+    pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+    pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+
+    D3D12_MESSAGE_SEVERITY severities[] = {
+      D3D12_MESSAGE_SEVERITY_INFO
+    };
+
+    D3D12_MESSAGE_ID denyIds[] = {
+      D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+      D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+      D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+    };
+
+    D3D12_INFO_QUEUE_FILTER newFilter = {};
+    newFilter.DenyList.NumSeverities = _countof(severities);
+    newFilter.DenyList.pSeverityList = severities;
+    newFilter.DenyList.NumIDs = _countof(denyIds);
+    newFilter.DenyList.pIDList = denyIds;
+
+    ThrowIfFailed(pInfoQueue->PushStorageFilter(&newFilter));
+  }
+#endif
+
+  return d3d12Device2;
+}
+
+// Create command queue from tutorial
+Microsoft::WRL::ComPtr<ID3D12CommandQueue> CreateCommandQueue(Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type) {
+  Microsoft::WRL::ComPtr<ID3D12CommandQueue> d3d12CommandQueue;
+
+  D3D12_COMMAND_QUEUE_DESC desc = {};
+  desc.Type     = type;
+  desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+  desc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
+  desc.NodeMask = 0;
+
+  ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
+
+  return d3d12CommandQueue;
+}
+
+// Check tearing support
+bool CheckTearingSupport() {
+  BOOL allowTearing = FALSE;
+
+  Microsoft::WRL::ComPtr<IDXGIFactory4> factory;
+  if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory)))) {
+    Microsoft::WRL::ComPtr<IDXGIFactory5> factory5;
+    if (SUCCEEDED(factory.As(&factory5))) {
+      if (FAILED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing)))) {
+        allowTearing = FALSE;
+      }
+    }
+  }
+
+  return allowTearing == TRUE;
+}
+
 // Debug function from tutorial
 void EnableDebugLayer() {
 #if defined(_DEBUG)
