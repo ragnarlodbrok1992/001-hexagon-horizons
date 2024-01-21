@@ -234,6 +234,21 @@ Microsoft::WRL::ComPtr<IDXGISwapChain4> CreateSwapChain(HWND hWnd, Microsoft::WR
   return dxgiSwapChain4;
 }
 
+// Creating descriptor heaps from tutorial
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors) {
+  Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+
+  D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+  desc.NumDescriptors = numDescriptors;
+  desc.Type = type;
+
+  ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
+
+  return descriptorHeap;
+}
+
+// Creating render target views from tutorial
+
 // Debug function from tutorial
 void EnableDebugLayer() {
 #if defined(_DEBUG)
