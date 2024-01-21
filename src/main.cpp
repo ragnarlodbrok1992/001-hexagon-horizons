@@ -606,6 +606,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
   g_CommandList = CreateCommandList(g_Device, g_CommandAllocators[g_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
 
+  g_Fence = CreateFence(g_Device);
+  g_FenceEvent = CreateEventHandle();
+
+  g_IsInitialized = true;
+
+  ::ShowWindow(m_hwnd, nCmdShow);
+
+  MSG msg = {};
+
+  while (msg.message != WM_QUIT) {
+    if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+      ::TranslateMessage(&msg);
+      ::DispatchMessage(&msg);
+    }
+    else {
+      ::TranslateMessage(&msg);
+      ::DispatchMessage(&msg);
+    }
+  }
+
+  Flush(g_CommandQueue, g_Fence, g_FenceValue, g_FenceEvent);
+
+  ::CloseHandle(g_FenceEvent);
+
+  return 0;
+
   /* OLD CODE
   // Parse command line arguments
   ParseCommandLineArguments();
