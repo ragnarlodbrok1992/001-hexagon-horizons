@@ -303,6 +303,28 @@ HANDLE CreateEventHandle() {
   return fenceEvent;
 }
 
+// Create signal fence from tutorial
+uint64_t Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t& fenceValue) {
+  uint64_t fenceValueForSignal = ++fenceValue;
+  ThrowIfFailed(commandQueue->Signal(fence.Get(), fenceValueForSignal));
+
+  return fenceValueForSignal;
+}
+
+// Wait until fence reaches value from tutorial
+void WaitForFenceValue(Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t fenceValue, HANDLE fenceEvent, std::chrono::milliseconds duration = std::chrono::milliseconds::max()) {
+  if (fence->GetCompletedValue() < fenceValue) {
+    ThrowIfFailed(fence->SetEventOnCompletion(fenceValue, fenceEvent));
+    ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
+  }
+}
+
+// Flush command queue from tutorial
+void Flush(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t& fenceValue, HANDLE fenceEvent) {
+  uint64_t fenceValueForSignal = Signal(commandQueue, fence, fenceValue);
+  WaitForFenceValue(fence, fenceValueForSignal, fenceEvent);
+}
+
 // Debug function from tutorial
 void EnableDebugLayer() {
 #if defined(_DEBUG)
