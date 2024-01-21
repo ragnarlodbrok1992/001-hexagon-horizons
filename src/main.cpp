@@ -265,6 +265,34 @@ void UpdateRenderTargetViews(Microsoft::WRL::ComPtr<ID3D12Device2> device, Micro
   }
 }
 
+// Create command allocator from tutorial
+Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type) {
+
+  Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+  ThrowIfFailed(device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
+
+  return commandAllocator;
+}
+
+// Create command list from tutorial
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CreateCommandList(Microsoft::WRL::ComPtr<ID3D12Device2> device, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, D3D12_COMMAND_LIST_TYPE type) {
+  Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
+  ThrowIfFailed(device->CreateCommandList(0, type, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+
+  ThrowIfFailed(commandList->Close());
+
+  return commandList;
+}
+
+// Create fence from tutorial
+Microsoft::WRL::ComPtr<ID3D12Fence> CreateFence(Microsoft::WRL::ComPtr<ID3D12Device2> device) {
+  Microsoft::WRL::ComPtr<ID3D12Fence> fence;
+
+  ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+
+  return fence;
+}
+
 // Debug function from tutorial
 void EnableDebugLayer() {
 #if defined(_DEBUG)
