@@ -12,7 +12,7 @@ pushd build
   /Fe:"main.exe"^
   ../src/main.cpp^
   /I"../lib/DirectX-Headers-main/include/directx/"^
-  /link User32.lib Shell32.lib dxguid.lib d3d12.lib d3dcompiler.lib
+  /link User32.lib Shell32.lib dxguid.lib d3d12.lib d3dcompiler.lib dxgi.lib
 
 echo "Done building!"
 
