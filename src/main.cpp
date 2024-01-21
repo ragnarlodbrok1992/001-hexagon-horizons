@@ -38,20 +38,8 @@ bool g_VSync = true;
 bool g_TearingSupported = false;
 bool g_Fullscreen = false;
 
-
-// Window callback function
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-
-  switch (uMsg) {
-    case WM_DESTROY: {
-      PostQuitMessage(0);
-      return 0;
-    }
-  }
-
-  // Default message handler
-  return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
+// Forward declarations
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // Create window function from tutorial
 HWND EngineCreateWindow(const wchar_t* windowClassName, HINSTANCE hInst, const wchar_t* windowTitle, uint32_t width, uint32_t height) {
@@ -86,6 +74,27 @@ HWND EngineCreateWindow(const wchar_t* windowClassName, HINSTANCE hInst, const w
 
   return hWnd;
 
+}
+
+// Register window class from tutorial
+void RegisterWindowClass(HINSTANCE hInst, const wchar_t* windowClassName) {
+  WNDCLASSEXW windowClass = {};
+
+  windowClass.cbSize = sizeof(WNDCLASSEXW);
+  windowClass.style = CS_HREDRAW | CS_VREDRAW;
+  windowClass.lpfnWndProc = &WindowProc;
+  windowClass.cbClsExtra = 0;
+  windowClass.cbWndExtra = 0;
+  windowClass.hInstance = hInst;
+  windowClass.hIcon = ::LoadIcon(hInst, NULL);
+  windowClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+  windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+  windowClass.lpszMenuName = NULL;
+  windowClass.lpszClassName = windowClassName;
+  windowClass.hIconSm = ::LoadIcon(hInst, NULL);
+
+  static ATOM atom = ::RegisterClassExW(&windowClass);
+  assert(atom > 0 && "Failed to register window class");
 }
 
 // Getting adapter from tutorial
@@ -418,6 +427,47 @@ void Resize(uint32_t width, uint32_t height) {
   }
 }
 
+// Setting fullscreen state from tutorial
+void SetFullscreen(bool fullscreen) {
+  if (g_Fullscreen != fullscreen) {
+    g_Fullscreen = fullscreen;
+
+    if (g_Fullscreen) {
+      ::GetWindowRect(m_hwnd, &g_WindowRect);
+
+      UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+
+      ::SetWindowLongW(m_hwnd, GWL_STYLE, windowStyle);
+
+
+      HMONITOR hMonitor = ::MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
+      MONITORINFOEX monitorInfo = {};
+      monitorInfo.cbSize = sizeof(MONITORINFOEX);
+      ::GetMonitorInfo(hMonitor, &monitorInfo);
+
+      ::SetWindowPos(m_hwnd, HWND_TOP,
+         monitorInfo.rcMonitor.left,
+         monitorInfo.rcMonitor.top,
+         monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+         monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+         SWP_FRAMECHANGED | SWP_NOACTIVATE);
+      ::ShowWindow(m_hwnd, SW_MAXIMIZE);
+    }
+    else {
+      ::SetWindowLongW(m_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+
+      ::SetWindowPos(m_hwnd, HWND_NOTOPMOST,
+         g_WindowRect.left,
+         g_WindowRect.top,
+         g_WindowRect.right - g_WindowRect.left,
+         g_WindowRect.bottom - g_WindowRect.top,
+         SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+      ::ShowWindow(m_hwnd, SW_NORMAL);
+    }
+  }
+}
+
 // Debug function from tutorial
 void EnableDebugLayer() {
 #if defined(_DEBUG)
@@ -448,8 +498,96 @@ void ParseCommandLineArguments() {
   ::LocalFree(argv);
 }
 
+// Window callback function
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+  /* OLD CODE
+  switch (uMsg) {
+    case WM_DESTROY: {
+      PostQuitMessage(0);
+      return 0;
+    }
+  }
+
+  // Default message handler
+  return DefWindowProc(hwnd, uMsg, wParam, lParam);
+  */
+
+  if (g_IsInitialized) {
+    switch (uMsg) {
+      case WM_PAINT:
+        Update();
+        Render();
+        break;
+      case WM_SYSKEYDOWN:
+      case WM_KEYDOWN:
+      {
+        bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+
+        switch (wParam)
+        {
+        case 'V':
+          g_VSync = !g_VSync;
+          break;
+        case VK_ESCAPE:
+          ::PostQuitMessage(0);
+          break;
+        case VK_RETURN:
+          if (alt) {
+        case VK_F11:
+          SetFullscreen(!g_Fullscreen);
+          }
+          break;
+        }
+      }
+      break;
+      case WM_SYSCHAR:
+        break;
+      case WM_SIZE:
+      {
+        RECT clientRect = {};
+        ::GetClientRect(m_hwnd, &clientRect);
+
+        int width = clientRect.right - clientRect.left;
+        int height = clientRect.bottom - clientRect.top;
+
+        Resize(width, height);
+      }
+      break;
+      case WM_DESTROY:
+        ::PostQuitMessage(0);
+        break;
+      default:
+        return ::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+    }
+  }
+  else
+  {
+    return ::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+  }
+
+  return 0;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+
+  SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+  const wchar_t* windowClassName = L"Hexagon Horizons";
+  ParseCommandLineArguments();
+
+  EnableDebugLayer();
+
+  g_TearingSupported = CheckTearingSupport();
+
+  RegisterWindowClass(hInstance, windowClassName);
+  m_hwnd = EngineCreateWindow(windowClassName, hInstance, L"Hexagon Horizons - alpha version.", g_ScreenWidth, g_ScreenHeight);
+
+  ::GetWindowRect(m_hwnd, &g_WindowRect);
+
+
+
+  /* OLD CODE
   // Parse command line arguments
   ParseCommandLineArguments();
 
@@ -479,7 +617,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
   // Create the window nad store a handle to it
-  /*
   m_hwnd = CreateWindow(
     windowClass.lpszClassName,
     "Hexagon Horizons",
@@ -492,13 +629,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     nullptr,
     hInstance,
     0);
-    */
 
   // Show window
   // ShowWindow(m_hwnd, nCmdShow);
 
   // Message loop
-  /*
   MSG msg = {};
   while (msg.message != WM_QUIT) {
     if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -506,9 +641,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       DispatchMessage(&msg);
     }
   }
-  */
 
   // Windowsy return
   // return static_cast<char>(msg.wParam);
+  */
+
+
   return 0;
 }
