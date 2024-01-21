@@ -293,6 +293,16 @@ Microsoft::WRL::ComPtr<ID3D12Fence> CreateFence(Microsoft::WRL::ComPtr<ID3D12Dev
   return fence;
 }
 
+// Create an event handle from tutorial
+HANDLE CreateEventHandle() {
+  HANDLE fenceEvent;
+
+  fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+  assert(fenceEvent && "Failed to create fence event.");
+
+  return fenceEvent;
+}
+
 // Debug function from tutorial
 void EnableDebugLayer() {
 #if defined(_DEBUG)
