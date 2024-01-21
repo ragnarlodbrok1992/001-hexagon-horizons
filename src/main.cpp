@@ -248,6 +248,22 @@ Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(Microsoft::WRL
 }
 
 // Creating render target views from tutorial
+void UpdateRenderTargetViews(Microsoft::WRL::ComPtr<ID3D12Device2> device, Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain, Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap) {
+  auto rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+  CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+  for (int i = 0; i < g_NumFrames; ++i) {
+    Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
+    ThrowIfFailed(swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
+
+    device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtvHandle);
+
+    g_BackBuffers[i] = backBuffer;
+
+    rtvHandle.Offset(rtvDescriptorSize);
+  }
+}
 
 // Debug function from tutorial
 void EnableDebugLayer() {
