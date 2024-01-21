@@ -585,7 +585,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
   ::GetWindowRect(m_hwnd, &g_WindowRect);
 
+  Microsoft::WRL::ComPtr<IDXGIAdapter4> dxgiAdapter4 = GetAdapter(g_UseWarp);
 
+  g_Device = CreateDevice(dxgiAdapter4);
+
+  g_CommandQueue = CreateCommandQueue(g_Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+  g_SwapChain = CreateSwapChain(m_hwnd, g_CommandQueue, g_ScreenWidth, g_ScreenHeight, g_NumFrames);
+
+  g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
+
+  g_RTVDescriptorHeap = CreateDescriptorHeap(g_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, g_NumFrames);
+  g_RTVDescriptorSize = g_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+  UpdateRenderTargetViews(g_Device, g_SwapChain, g_RTVDescriptorHeap);
 
   /* OLD CODE
   // Parse command line arguments
