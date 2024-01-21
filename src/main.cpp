@@ -600,6 +600,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
   UpdateRenderTargetViews(g_Device, g_SwapChain, g_RTVDescriptorHeap);
 
+  for (int i = 0; i < g_NumFrames; ++i) {
+    g_CommandAllocators[i] = CreateCommandAllocator(g_Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+  }
+
+  g_CommandList = CreateCommandList(g_Device, g_CommandAllocators[g_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
+
   /* OLD CODE
   // Parse command line arguments
   ParseCommandLineArguments();
