@@ -348,6 +348,52 @@ void Update() {
     elapsedSeconds = 0.0;
   }
 }
+// Render function from tutorial
+void Render() {
+  auto commandAllocator = g_CommandAllocators[g_CurrentBackBufferIndex];
+  auto backBuffer = g_BackBuffers[g_CurrentBackBufferIndex];
+
+  commandAllocator->Reset();
+  g_CommandList->Reset(commandAllocator.Get(), nullptr);
+
+  // Clear the render target
+  {
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        backBuffer.Get(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    );
+    g_CommandList->ResourceBarrier(1, &barrier);
+
+    FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(g_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), g_CurrentBackBufferIndex, g_RTVDescriptorSize);
+    g_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+  }
+
+  // Present
+  {
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        backBuffer.Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT
+    );
+    g_CommandList->ResourceBarrier(1, &barrier);
+
+    ThrowIfFailed(g_CommandList->Close());
+
+    ID3D12CommandList* commandLists[] = {g_CommandList.Get()};
+    g_CommandQueue->ExecuteCommandLists(1, commandLists);
+
+    UINT syncInterval = g_VSync ? 1 : 0;
+    UINT presentFlags = g_TearingSupported && !g_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+    ThrowIfFailed(g_SwapChain->Present(syncInterval, presentFlags));
+
+    g_FrameFenceValues[g_CurrentBackBufferIndex] = Signal(g_CommandQueue, g_Fence, g_FenceValue);
+    g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
+
+    WaitForFenceValue(g_Fence, g_FrameFenceValues[g_CurrentBackBufferIndex], g_FenceEvent);
+  }
+}
 
 // Debug function from tutorial
 void EnableDebugLayer() {
