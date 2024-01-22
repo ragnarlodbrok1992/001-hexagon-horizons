@@ -1,0 +1,5 @@
+1. Basic philosophy of our codebase going forward
+2. Basic design philosophy as a subset of meta philosophy defined above
+3. Basic design of engine and the codebase
+4. Design of game
+  a) Hexagon Horizon - starting point

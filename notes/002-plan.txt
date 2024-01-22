@@ -1,0 +1,14 @@
+1. Tutorial
+  - Initializing - already done
+  - Rendering - basic stuff, rendering cube, MVP matrix
+  - Framework - some additional stuff, but not defining our framework
+  - Textures - basic texture loading
+2. Framework of our code
+  - Code structure
+  - Abstraction structure
+  - Least-viable-code philosophy
+  - How to define problem and how to tackle it
+3. Tech demo
+  - Basic tech demo of hexagonal grid
+  - Basic tech demo of hexagonal grid merged with voxel-like water
+  - Basic tech demo of ships, animation, movement
